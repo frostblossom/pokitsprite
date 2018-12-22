@@ -6,6 +6,11 @@ Margins = namedtuple('Margins', ['top', 'right', 'bottom', 'left'])
 Area = namedtuple('Area', ['width', 'height'])
 
 class SpriteSheet:
+    @classmethod
+    def FromFile(cls, imgpath, sprite_px_area = None, margins = Margins(0,0,0,0)):
+        i = Image.open(imgpath)
+        return cls(i, sprite_px_area, margins)
+
     def __init__(self, img,
                  sprite_px_area = None,
                  margins = Margins(0, 0, 0, 0)):
@@ -18,9 +23,9 @@ class SpriteSheet:
         self.sprites_wide = m.floor(self.sheet_px.width / (self.sprite_region_px_width))
         self.sprites_high = m.floor(self.sheet_px.height / (self.sprite_region_px_height))
         self.sprites = [x for x in generate_sprites(self)]
-
-    def _make_sprite_seq_(self):
-        pass
+    
+    def __iter__(self):
+        return self.sprites.__iter__()
 
 def generate_sprites(spritesheet):
     for sx in range(spritesheet.sprites_wide):
@@ -32,10 +37,4 @@ def generate_sprites(spritesheet):
             yield spritesheet._img.crop((inset_left, inset_top, inset_right, inset_bottom))
 
 
-def spritesheet_from_file (imgpath,
-                           sprite_px_area = None,
-                           margins = Margins(0, 0, 0, 0)):
-    i = Image.open(imgpath)
-    return SpriteSheet(i,
-                       sprite_px_area,
-                       margins)
+
