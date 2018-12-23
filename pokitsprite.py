@@ -36,5 +36,7 @@ def generate_sprites(spritesheet):
             inset_bottom = inset_top + spritesheet.sprite_px.height
             yield spritesheet._img.crop((inset_left, inset_top, inset_right, inset_bottom))
 
-
+def sprite_to_bytes(sprite):
+    l = list(sprite.getdata())
+    return list(sprite.getdata())
 

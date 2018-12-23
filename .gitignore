@@ -1,3 +1,6 @@
+# testing output
+test_assets/out/
+
 # macOS stuff
 .DS_Store
 
