@@ -26,3 +26,4 @@ def test_spritesheet_cuts_sprites():
 
 def test_sprite_to_bytes():
     assert 0 == len(spritesheet_to_bytes(santasheet))
+

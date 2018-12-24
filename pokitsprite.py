@@ -35,6 +35,7 @@ class SpriteSheet:
     
     def __iter__(self):
         return self.sprites.__iter__()
+    
 
 def get_palette(spritesheet):
     # return [e for e in spritesheet._palette_img.getdata()]
@@ -67,7 +68,9 @@ def spritesheet_to_bytes(spritesheet):
     palette_convertion = get_palette(spritesheet)
     indexes = [sprite_index(e, palette_convertion) for e in spritesheet]
     shrunk = [shrink_palette_space(e) for e in indexes]
-    print(shrunk)
+    tb_byte_array = build_initial_array(spritesheet)
+    seperated_shrunk = seperate_shrunk_space(shrunk)
+    print(seperated_shrunk)
     # return byteman
     return shrunk
 
@@ -93,3 +96,29 @@ def shrink_palette_space(intseq):
             reverts.append(index)
             new_color_counter = new_color_counter + 1
     return {'mapping': reverts, 'seq': accum}
+
+def seperate_shrunk_space(shrunk_sprites):
+    paletterev = {(0,):0}
+    palettes = [(0,)]
+    palette_counter = 1
+    for spriti in shrunk_sprites:
+        palette = tuple(spriti['mapping'])
+        data = spriti['seq']
+        palette_ind = paletterev.get(palette, None)
+        if (palette == (0)):
+            spriti['mapping'] = 0
+        elif (palette_ind != None):
+            spriti['mapping'] = palette_ind
+        else:
+            paletterev.update({palette: palette_counter})
+            palettes.append(palette)
+            spriti['mapping'] = palette_counter
+            palette_counter = palette_counter + 1
+    return {'palettes': palettes, 'sprites': shrunk_sprites}
+
+
+def build_initial_array(spritesheet):
+    return [
+        spritesheet.sprite_region_px_width,
+        spritesheet.sprite_region_px_width
+        ]
