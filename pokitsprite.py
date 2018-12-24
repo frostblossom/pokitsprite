@@ -1,19 +1,26 @@
 from PIL import Image
 import math as m
-from collections import namedtuple
+import os as os
+from collections import namedtuple, Counter
 
 Margins = namedtuple('Margins', ['top', 'right', 'bottom', 'left'])
 Area = namedtuple('Area', ['width', 'height'])
 
+famicubePalette = [
+
+]
+
 class SpriteSheet:
     @classmethod
-    def FromFile(cls, imgpath, sprite_px_area = None, margins = Margins(0,0,0,0)):
+    def FromFile(cls, imgpath, sprite_px_area = None, margins = Margins(0,0,0,0), palette_src = None):
         i = Image.open(imgpath)
-        return cls(i, sprite_px_area, margins)
+        p = Image.open(palette_src if palette_src else os.path.dirname(imgpath) + '/palette.png') 
+        return cls(i, sprite_px_area, margins, palette_img = p)
 
     def __init__(self, img,
                  sprite_px_area = None,
-                 margins = Margins(0, 0, 0, 0)):
+                 margins = Margins(0, 0, 0, 0), 
+                 palette_img = None):
         self._img = img
         self.sheet_px = Area(img.size[0], img.size[1])
         self.sprite_px = Area(sprite_px_area[0], sprite_px_area[1]) if sprite_px_area else Area(self.sheet_px.width, self.sheet_px.height)
@@ -23,20 +30,66 @@ class SpriteSheet:
         self.sprites_wide = m.floor(self.sheet_px.width / (self.sprite_region_px_width))
         self.sprites_high = m.floor(self.sheet_px.height / (self.sprite_region_px_height))
         self.sprites = [x for x in generate_sprites(self)]
+        self._palette_img = palette_img
+
     
     def __iter__(self):
         return self.sprites.__iter__()
 
+def get_palette(spritesheet):
+    # return [e for e in spritesheet._palette_img.getdata()]
+    rawpalette = [e for e in spritesheet._palette_img.convert().getdata()]
+    hashpalette = {(e[0], e[1], e[2]):n+1 for n, e in enumerate(rawpalette)}
+    hashpalette.update({0: 0})
+    return hashpalette
+
+def get_spritesheet_colors(spritesheet):
+    colors = Counter(spritesheet._img.getdata())
+    return colors.most_common()
+
+def get_sprite_colors(sprite):
+    return [e[0] for e in Counter(sprite.getdata()).most_common() if e[0][3] > 128]
+
+def getColorMapping(colorcount):
+    # no_trans = [ (e[0][0], e[0][1], e[0][2]) for e in colorcount if e[0][3] < 126 ]
+    return list(colorcount)
+
 def generate_sprites(spritesheet):
-    for sx in range(spritesheet.sprites_wide):
-        for sy in range(spritesheet.sprites_high):
+    for sy in range(spritesheet.sprites_high):
+        for sx in range(spritesheet.sprites_wide):
             inset_left = (spritesheet.sprite_region_px_width * sx) + spritesheet.margins.left
             inset_top = (spritesheet.sprite_region_px_height * sy) + spritesheet.margins.top
             inset_right = inset_left + spritesheet.sprite_px.width
             inset_bottom = inset_top + spritesheet.sprite_px.height
             yield spritesheet._img.crop((inset_left, inset_top, inset_right, inset_bottom))
+        
+def spritesheet_to_bytes(spritesheet):
+    palette_convertion = get_palette(spritesheet)
+    indexes = [sprite_index(e, palette_convertion) for e in spritesheet]
+    shrunk = [shrink_palette_space(e) for e in indexes]
+    print(shrunk)
+    # return byteman
+    return shrunk
 
-def sprite_to_bytes(sprite):
-    l = list(sprite.getdata())
-    return list(sprite.getdata())
+def sprite_index(sprite, convertion_dict):
+    return [convertion_dict.get(e, 0) for e in colors_for_sprite(sprite)]
 
+def colors_for_sprite(sprite):
+    l = [(e[0], e[1], e[2]) if e[3] > 126 else 0 for e in sprite.getdata()]
+    return l
+
+def shrink_palette_space(intseq):
+    mappings = {0:0}
+    reverts = [0]
+    accum = []
+    new_color_counter = 1
+    for index in intseq:
+        indmap = mappings.get(index, None)
+        if (indmap != None):
+            accum.append(indmap)
+        else:
+            mappings.update({index:new_color_counter})
+            accum.append(new_color_counter)
+            reverts.append(index)
+            new_color_counter = new_color_counter + 1
+    return {'mapping': reverts, 'seq': accum}

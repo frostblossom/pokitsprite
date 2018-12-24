@@ -1,4 +1,4 @@
-from pokitsprite import SpriteSheet, sprite_to_bytes
+from pokitsprite import SpriteSheet, spritesheet_to_bytes
 
 test_asset_root = 'test_assets'
 test_image_suffix = '.png'
@@ -25,4 +25,4 @@ def test_spritesheet_cuts_sprites():
         sprite.save(test_asset_root + '/out/' + str(counter) + ".png")
 
 def test_sprite_to_bytes():
-    assert 0 == sprite_to_bytes(santasheet.sprites[0])
+    assert 0 == len(spritesheet_to_bytes(santasheet))
