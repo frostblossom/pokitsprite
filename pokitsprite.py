@@ -70,9 +70,27 @@ def spritesheet_to_bytes(spritesheet):
     shrunk = [shrink_palette_space(e) for e in indexes]
     tb_byte_array = build_initial_array(spritesheet)
     seperated_shrunk = seperate_shrunk_space(shrunk)
-    print(seperated_shrunk)
+    tb_byte_array.append(len(seperated_shrunk['palettes']))
+    for e in seperated_shrunk['palettes']:
+        tb_byte_array.append(len(e))
+        [tb_byte_array.append(n) for n in e]
+    for e in seperated_shrunk['sprites']:
+        rawsprite = e['seq']
+        e['seq'] = compactify_sprite_seq(rawsprite)
+    for e in seperated_shrunk['sprites']:
+        tb_byte_array.append(e['mapping'])
+        [tb_byte_array.append(n) for n in e['seq']]
+    byteboi = bytearray(tb_byte_array)
+    # print(byteboi)
+    # print(tb_byte_array)
     # return byteman
-    return shrunk
+    return byteboi
+
+def compactify_sprite_seq(spriteseq):
+    spriteseq = list(spriteseq)
+    if (len(spriteseq) % 2 == 0):
+        spriteseq.append(0)
+    return [h << 4 | b for h, b in zip(*[iter(spriteseq)] * 2)]
 
 def sprite_index(sprite, convertion_dict):
     return [convertion_dict.get(e, 0) for e in colors_for_sprite(sprite)]

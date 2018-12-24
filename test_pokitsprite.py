@@ -25,5 +25,8 @@ def test_spritesheet_cuts_sprites():
         sprite.save(test_asset_root + '/out/' + str(counter) + ".png")
 
 def test_sprite_to_bytes():
-    assert 0 == len(spritesheet_to_bytes(santasheet))
+    assert 8410 == len(spritesheet_to_bytes(santasheet))
 
+def test_size_of_bytearray():
+    with open(test_asset_root + '/bytesout', 'wb') as f:
+        f.write(spritesheet_to_bytes(santasheet))
